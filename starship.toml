@@ -1,0 +1,78 @@
+# ~/.config/starship.toml
+
+# 1. 配置用户名 (User)
+[username]
+style_user = "yellow bold"
+style_root = "red bold"
+format = "[$user]($style)"
+show_always = true    # <--- 关键：永远显示用户名
+
+# 2. 配置主机名 (Hostname)
+[hostname]
+ssh_only = false      # <--- 关键：即使不是 SSH 也显示主机名
+format = "@[$hostname]($style) "
+trim_at = "."         # 如果主机名很长(xxx.local)，只显示第一段
+style = "cyan"
+
+# 3. 禁用编程语言环境显示
+
+[python]
+disabled = true
+
+[nodejs]
+disabled = true
+
+[golang]
+disabled = true
+
+# =======================
+# 2. 路径 (视觉焦点)
+# =======================
+[directory]
+style = "yellow"
+truncation_length = 4
+truncation_symbol = "…/"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+# =======================
+# 3. Git 状态 (优雅点缀)
+# =======================
+[git_branch]
+symbol = ""
+style = "purple bold"
+format = "[$symbol$branch]($style)"
+
+[git_status]
+disabled = false
+format = ' ([$all_status$ahead_behind]($style) )'
+style = "red bold"               # 有变更时显示红色，起警示作用
+staged = "[+](green) "           # 暂存   - git add 后状态
+modified = "[!](red) "           # 变动   - 文件改了但没 add
+untracked = "[?](yellow) "       # 未追踪 - 新建文件
+deleted = "[✘](red) "            # 删除   - 
+renamed = "[»](yellow) "         # 重命名 - 
+conflicted = "[=](red bold) "    # 冲突   -
+stashed = "[$](cyan) "           # 暂存   - git stash 藏起来的内容
+ahead = "⇡"                      # 向上箭头 (领先)
+behind = "⇣"                     # 向下箭头 (落后)
+diverged = "⇕"                   # 双向箭头 (既领先又落后)
+up_to_date = ""                  # 最新不显示
+
+# =======================
+# 4. Conda 环境 (重写标识)
+# =======================
+[conda]
+disabled = true
+ignore_base = false # 忽略 base 环境 (如果你不想看一直显示 (base)，就把 false 改成 true)
+style = "#78E08F bold"
+# format = "[$environment]($style) "
+symbol = ""
+format = "[\\($symbol$environment\\)]($style) "
+
+# =======================
+# 5. 提示符 (灵动指针)
+# =======================
+[character]
+success_symbol = "[❯](white bold)"     # 成功时显示白色箭头
+error_symbol = "[❯](red bold)"         # 报错时变红
+vimcmd_symbol = "[❮](green bold)"      # 误触 vim 模式，它会变绿提醒
