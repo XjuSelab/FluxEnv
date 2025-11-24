@@ -518,7 +518,7 @@ show_always = true
 ssh_only = false
 format = "@[$hostname]($style) "
 trim_at = "."
-style = "cyan"
+style = "blue"
 
 [python]
 disabled = true
