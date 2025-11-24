@@ -479,8 +479,8 @@ compinit
 export PATH="$HOME/bin:$PATH"
 
 # VPN 别名
-alias vpn-start='source ~/bin/start-vpn'
-alias vpn-stop='source ~/bin/stop-vpn'
+alias start-vpn='source ~/bin/start-vpn'
+alias stop-vpn='source ~/bin/stop-vpn'
 
 # ==============================================
 # end. 加载插件
