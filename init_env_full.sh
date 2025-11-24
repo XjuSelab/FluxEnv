@@ -79,26 +79,39 @@ case "$ARCH" in
 esac
 
 # ==============================================
-# 阶段 1: 系统更新和软件包安装
+# 阶段 1: 系统更新和软件包安装 (优化容错版)
 # ==============================================
 show_stage "系统更新和软件包安装"
 
-show_progress "更新软件源信息..."
-apt update
+# 1. 清理可能损坏的列表缓存 (这是解决你报错的关键)
+show_progress "清理旧的软件源缓存..."
+rm -rf /var/lib/apt/lists/*
 
+# 2. 尝试更新源，允许失败 (关键修改：|| true)
+# 说明：如果 apt update 报错，打印警告但不退出脚本，继续尝试后续步骤
+show_progress "更新软件源信息..."
+apt update || echo "${YELLOW}警告: 软件源更新遇到问题，将尝试使用现有缓存继续安装...${RESET}"
+
+# 3. 尝试修复潜在的依赖破坏
+show_progress "检查并修复依赖关系..."
+apt install -f -y
+
+# 4. 升级系统 (如果 update 失败，这一步可能不会做太多事，但不会报错)
 show_progress "升级系统软件包..."
-apt upgrade -y
+# DEBIAN_FRONTEND=noninteractive 防止升级过程中弹出弹窗卡住脚本
+DEBIAN_FRONTEND=noninteractive apt upgrade -y || echo "${YELLOW}警告: 系统升级未完全完成，跳过...${RESET}"
 
 show_progress "清理不需要的软件包..."
 apt autoremove -y
 
 show_progress "安装基础工具..."
-apt install -y wget curl unzip jq
+# 同样允许安装过程中出现小错误
+apt install -y wget curl unzip jq || echo "${YELLOW}警告: 部分基础工具安装失败${RESET}"
 
 show_progress "安装开发依赖软件..."
-apt install -y git zsh gcc g++ glibc-doc autojump universal-ctags
+apt install -y git zsh gcc g++ glibc-doc autojump universal-ctags || echo "${YELLOW}警告: 部分开发依赖安装失败${RESET}"
 
-echo "${GREEN}✓ 软件包安装完成${RESET}"
+echo "${GREEN}✓ 软件包安装阶段结束${RESET}"
 
 # ==============================================
 # 阶段 2: SSH配置优化
