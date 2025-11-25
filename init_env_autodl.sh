@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================
-# AutoDL 专用初始化脚本 (v2: 修复 Hostname 报错)
+# AutoDL 专用初始化脚本 (v3: 修复 /etc/hosts 锁定问题)
 # 功能：强制视觉伪装主机名、Zsh、Starship、VPN
 # ==============================================
 
@@ -39,7 +39,6 @@ if [[ $(whoami) != "root" ]];then
     exit 1
 fi
 
-# 架构检测
 ARCH=$(uname -m)
 case "$ARCH" in
     x86_64) XRAY_ZIP="Xray-linux-64.zip" ;;
@@ -53,7 +52,7 @@ esac
 show_stage "系统更新与基础软件"
 
 rm -rf /var/lib/apt/lists/*
-echo "${YELLOW}正在更新软件源 (如果报错会自动跳过)...${RESET}"
+echo "${YELLOW}正在更新软件源...${RESET}"
 apt update || echo "${YELLOW}Apt update 警告 (可忽略)${RESET}"
 
 DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
@@ -65,18 +64,17 @@ export LANG=en_US.UTF-8
 echo "${GREEN}✓ 软件包安装完成${RESET}"
 
 # ==============================================
-# 阶段 2: SSH配置 (跳过服务重启)
+# 阶段 2: SSH配置
 # ==============================================
 show_stage "SSH 配置优化"
 sed -i 's/^#ClientAliveInterval.*/ClientAliveInterval 60/' /etc/ssh/sshd_config
 sed -i 's/^#ClientAliveCountMax.*/ClientAliveCountMax 3/' /etc/ssh/sshd_config
-# AutoDL 不需要也不应该重启 SSH 服务，直接跳过
-echo "${GREEN}✓ SSH 配置优化完成 (下次连接生效)${RESET}"
+echo "${GREEN}✓ SSH 配置优化完成${RESET}"
 
 # ==============================================
-# 阶段 3: 主机名设置 (视觉欺骗模式)
+# 阶段 3: 主机名设置 (Docker 锁死绕过版)
 # ==============================================
-show_stage "主机名配置 (视觉伪装模式)"
+show_stage "主机名配置 (AutoDL 兼容模式)"
 
 regex="^[a-zA-Z][a-zA-Z0-9_-]*$"
 while [[ 1 ]];do
@@ -87,20 +85,26 @@ done
 
 echo "正在应用主机名: ${host_name}"
 
-# --- 关键修改：允许 hostname 命令失败 ---
-# 尝试修改内核主机名，但如果报错（AutoDL限制），则忽略错误，继续执行
-# `|| true` 保证了脚本不会因为这个错误而退出
-hostname "${host_name}" 2>/dev/null || echo "${YELLOW}提示: 容器锁定内核主机名，将启用配置文件级伪装 (不影响使用)${RESET}"
+# 1. 尝试修改内核主机名 (允许失败)
+hostname "${host_name}" 2>/dev/null || echo "${YELLOW}提示: 容器锁定内核主机名，已启用配置文件级伪装${RESET}"
 
-# 修改 hosts 映射 (解决 sudo 慢的问题)
+# 2. 修复 /etc/hosts (修复 Device busy 报错)
 HOST_IP=$(hostname -I | awk '{print $1}')
 if [ -n "$HOST_IP" ]; then
-    # 先清理旧的
-    sed -i "/$HOST_IP/d" /etc/hosts
-    echo "$HOST_IP  ${host_name}" >> /etc/hosts
+    echo "正在更新 /etc/hosts ..."
+    # 方法：不直接操作 /etc/hosts，而是操作临时文件，最后用 cat 回写内容
+    cp /etc/hosts /tmp/hosts.tmp
+    # 在临时文件中删除旧 IP 记录
+    sed -i "/$HOST_IP/d" /tmp/hosts.tmp
+    # 追加新记录
+    echo "$HOST_IP  ${host_name}" >> /tmp/hosts.tmp
+    # 关键点：用 cat > 覆盖内容，而不是 mv (避免 Device busy 错误)
+    cat /tmp/hosts.tmp > /etc/hosts
+    rm -f /tmp/hosts.tmp
+    echo "${GREEN}✓ /etc/hosts 更新成功 (绕过挂载锁)${RESET}"
+else
+    echo "${YELLOW}警告: 无法获取 IP，跳过 hosts 配置${RESET}"
 fi
-
-echo "${GREEN}✓ 主机名伪装准备就绪${RESET}"
 
 # ==============================================
 # 阶段 4: 用户创建
@@ -132,7 +136,6 @@ chmod 0440 /etc/sudoers.d/nopasswd
 # 阶段 6: Xray VPN (仅解压)
 # ==============================================
 show_stage "检查 Xray VPN 资源"
-# 这里代码逻辑保持不变，为节省篇幅省略重复输出，核心功能完整
 if [ -n "$XRAY_ZIP" ] && [ -f "$SCRIPT_DIR/$XRAY_ZIP" ]; then
     unzip -o "$SCRIPT_DIR/$XRAY_ZIP" -d /usr/local/xray >/dev/null
     install -m 0755 /usr/local/xray/xray /usr/local/bin/xray
@@ -141,8 +144,7 @@ if [ -n "$XRAY_ZIP" ] && [ -f "$SCRIPT_DIR/$XRAY_ZIP" ]; then
     
     # 写入控制脚本
     mkdir -p /home/${username}/bin
-    # ... (Start/Stop 脚本写入逻辑同上个版本，此处隐去以精简，会自动执行) ...
-    # 为保证脚本完整性，这里简写 start-vpn 生成：
+    
     echo '#!/bin/bash' > /home/${username}/bin/start-vpn
     echo 'nohup xray run -c /usr/local/etc/xray/config.json > /tmp/xray.log 2>&1 &' >> /home/${username}/bin/start-vpn
     echo 'export http_proxy=http://127.0.0.1:10810; export https_proxy=http://127.0.0.1:10810; export all_proxy=socks5://127.0.0.1:10809' >> /home/${username}/bin/start-vpn
@@ -161,7 +163,7 @@ fi
 # ==============================================
 # 阶段 7 & 8: Zsh + Starship (强制伪装主机名)
 # ==============================================
-show_stage "配置 Zsh 与 Starship (Hardcode Hostname)"
+show_stage "配置 Zsh 与 Starship"
 
 # 安装 Starship
 if ! command -v starship &> /dev/null; then
@@ -192,10 +194,7 @@ alias stop-vpn='source ~/bin/stop-vpn'
 [ -f ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 EOF
 
-# --- 核心修复：生成 Starship 配置时，直接把主机名写死 ---
-# 我们不再让 Starship 去读取系统主机名，而是让它直接显示 "${host_name}" 这个字符串
-# 这样无论系统内核里叫什么，显示出来的永远是你设置的名字
-
+# 生成 Starship 配置 (硬编码主机名)
 mkdir -p /home/${username}/.config
 cat > /home/${username}/.config/starship.toml << EOF
 # Starship Configuration
@@ -206,13 +205,13 @@ style_root = "red bold"
 format = "[\$user](\$style)"
 show_always = true
 
-# 禁用默认的 hostname 模块 (因为它读取的是系统真名)
+# 禁用默认 Hostname 模块
 [hostname]
 disabled = true
 
-# 使用自定义模块来显示你想要的名字 "${host_name}"
+# 使用自定义模块显示 "${host_name}"
 [custom.my_hostname]
-command = "echo ${host_name}" # 这里直接注入了刚才输入的变量
+command = "echo ${host_name}"
 when = "true"
 format = "@[\$output](blue bold) "
 
@@ -238,7 +237,7 @@ chown -R ${username}:${username} /home/${username}/.zshrc /home/${username}/.zsh
 # ==============================================
 show_stage "安装完成"
 echo "================================================================"
-echo "  🎉 修复版环境初始化完毕！"
+echo "  🎉 V3 修复版环境初始化完毕！"
 echo "  主机名 (伪装): ${host_name}"
 echo "================================================================"
 echo "  请执行: ${GREEN}su - ${username}${RESET}"
