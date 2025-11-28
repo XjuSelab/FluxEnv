@@ -726,8 +726,8 @@ if [[ ${config_vim} == 'y' ]] && [ -f /home/${username}/.vimrc ]; then
 fi
 echo ""
 echo "  ${BLUE}VPN 使用方法：${RESET}"
-echo "    启动VPN: ${GREEN}vpn-start${RESET} 或 ${GREEN}source ~/bin/start-vpn${RESET}"
-echo "    停止VPN: ${GREEN}vpn-stop${RESET} 或 ${GREEN}source ~/bin/stop-vpn${RESET}"
+echo "    启动VPN: ${GREEN}start-vpn${RESET} 或 ${GREEN}source ~/bin/start-vpn${RESET}"
+echo "    停止VPN: ${GREEN}stop-vpn${RESET} 或 ${GREEN}source ~/bin/stop-vpn${RESET}"
 echo "    配置文件: /usr/local/etc/xray/config.json"
 echo ""
 echo "  ${YELLOW}提示：${RESET}"
