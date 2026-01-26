@@ -17,7 +17,8 @@ style = "cyan"
 # 3. 禁用编程语言环境显示
 
 [python]
-disabled = true
+disabled = false
+symbol = " "
 
 [nodejs]
 disabled = true
@@ -62,7 +63,7 @@ up_to_date = ""                  # 最新不显示
 # 4. Conda 环境 (重写标识)
 # =======================
 [conda]
-disabled = true
+disabled = false
 ignore_base = false # 忽略 base 环境 (如果你不想看一直显示 (base)，就把 false 改成 true)
 style = "#78E08F bold"
 # format = "[$environment]($style) "
