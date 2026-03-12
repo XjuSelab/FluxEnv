@@ -38,6 +38,7 @@ sudo ./scripts/fluxenv --profile autodl-user --config ./config/example.env --non
 ## Notes
 
 - Install flow defaults to switching Ubuntu apt sources to Tsinghua mirrors before `apt update`. Override with `ENABLE_APT_MIRROR=0` or custom `APT_UBUNTU_MIRROR` values in a config file.
+- Apt source backups are written to `/var/backups/fluxenv/apt/`, so `sources.list.d` stays clean and `apt update` does not emit backup-file warnings.
 - Install flow defaults to offline resources first. Online fallback is disabled unless `ALLOW_ONLINE_FETCH=1`.
 - Runtime system changes are implemented in step modules under `lib/steps/`, not in the wrapper scripts.
 - Resource provenance is documented in `docs/RESOURCE_SOURCES.md`.

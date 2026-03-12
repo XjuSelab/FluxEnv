@@ -134,6 +134,26 @@ backup_path() {
     cp -a "$path" "${path}.backup.$(date +%Y%m%d_%H%M%S)"
 }
 
+backup_path_to_dir() {
+    local path="$1"
+    local backup_dir="$2"
+    local backup_name=""
+
+    if [ ! -e "$path" ]; then
+        return 0
+    fi
+
+    if [ "${DRY_RUN:-0}" -eq 1 ]; then
+        progress "备份路径: $path -> $backup_dir"
+        return 0
+    fi
+
+    mkdir -p "$backup_dir"
+    backup_name="${path#/}"
+    backup_name="${backup_name//\//__}"
+    cp -a "$path" "$backup_dir/${backup_name}.backup.$(date +%Y%m%d_%H%M%S)"
+}
+
 remove_path() {
     local path="$1"
     if [ "${DRY_RUN:-0}" -eq 1 ]; then
@@ -286,22 +306,50 @@ set_sshd_option() {
 }
 
 restart_ssh_service() {
+    local restarted=0
+
     if [ "${RESTART_SSH:-0}" -ne 1 ]; then
         progress "跳过 SSH 服务重启"
         return 0
     fi
 
+    progress "重启 SSH 服务"
+
     if has_systemd; then
-        try_cmd "重启 SSH 服务" systemctl restart sshd || try_cmd "重启 SSH 服务" systemctl restart ssh
+        if [ "${DRY_RUN:-0}" -eq 1 ]; then
+            echo "    [dry-run] systemctl restart ssh"
+            return 0
+        fi
+
+        if command_exists systemctl; then
+            if systemctl restart ssh >/dev/null 2>&1; then
+                restarted=1
+            elif systemctl restart sshd >/dev/null 2>&1; then
+                restarted=1
+            fi
+        fi
+    fi
+
+    if [ "$restarted" -eq 1 ]; then
         return 0
     fi
 
     if command_exists service; then
-        try_cmd "重启 SSH 服务" service ssh restart || try_cmd "重启 SSH 服务" service sshd restart
-        return 0
+        if [ "${DRY_RUN:-0}" -eq 1 ]; then
+            echo "    [dry-run] service ssh restart"
+            return 0
+        fi
+
+        if service ssh restart >/dev/null 2>&1; then
+            return 0
+        fi
+
+        if service sshd restart >/dev/null 2>&1; then
+            return 0
+        fi
     fi
 
-    warn "未检测到可用的 SSH 服务管理器，已跳过重启"
+    warn "未能重启 SSH 服务，已继续执行"
 }
 
 set_hostname_safe() {

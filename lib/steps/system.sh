@@ -1,5 +1,7 @@
 #!/bin/bash
 
+APT_BACKUP_DIR="/var/backups/fluxenv/apt"
+
 update_hosts_file() {
     local resolved_ip=""
     if command_exists ip; then
@@ -56,8 +58,10 @@ apply_apt_mirror() {
         return 0
     fi
 
+    find /etc/apt/sources.list.d -maxdepth 1 -type f \( -name '*.list.backup.*' -o -name '*.sources.backup.*' \) -delete 2>/dev/null || true
+
     for file_path in "${mirror_files[@]}"; do
-        backup_path "$file_path"
+        backup_path_to_dir "$file_path" "$APT_BACKUP_DIR"
         sed -i \
             -e "s|https\?://archive\.ubuntu\.com/ubuntu|${APT_UBUNTU_MIRROR}|g" \
             -e "s|https\?://security\.ubuntu\.com/ubuntu|${APT_UBUNTU_MIRROR}|g" \
