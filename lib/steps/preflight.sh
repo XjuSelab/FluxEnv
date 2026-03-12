@@ -29,6 +29,25 @@ step_preflight() {
         progress "检测到宿主机环境"
     fi
 
+    if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER:-}" != "root" ]; then
+        LAUNCH_MODE="sudo-user"
+        INVOKING_USER="$SUDO_USER"
+        progress "检测到 sudo 用户上下文: $INVOKING_USER"
+    else
+        LAUNCH_MODE="root-session"
+        INVOKING_USER="root"
+        progress "检测到 root 会话上下文"
+    fi
+
+    if [ "$PROFILE_NAME" = "standard" ] && [ "$LAUNCH_MODE" = "sudo-user" ]; then
+        CREATE_USER=0
+        TARGET_USER="$INVOKING_USER"
+        TARGET_HOME="$(get_user_home "$TARGET_USER")"
+        ENABLE_TEMP_SUDO=0
+        FINAL_ACTION="none"
+        progress "standard profile 将复用当前 sudo 用户: $TARGET_USER"
+    fi
+
     if [ "$CREATE_USER" -eq 0 ]; then
         TARGET_USER="${TARGET_USER:-root}"
         TARGET_HOME="${TARGET_HOME:-$(get_user_home "$TARGET_USER")}"

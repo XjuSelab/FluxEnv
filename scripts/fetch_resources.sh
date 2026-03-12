@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MANIFEST_PATH="$ROOT_DIR/resources/manifest.lock"
+MANIFEST_PATH="$ROOT_DIR/config/resource-manifest.lock"
 
 download_http() {
     local url="$1"

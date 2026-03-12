@@ -14,7 +14,7 @@ done
 
 usage() {
     cat <<'EOF'
-Usage: bin/fluxenv [options]
+Usage: scripts/fluxenv [options]
 
 Options:
   --profile <name>       Built-in profile: standard, autodl-user, autodl-root

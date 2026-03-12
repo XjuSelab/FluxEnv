@@ -3,9 +3,11 @@
 load_defaults() {
     FLUXENV_ROOT="$1"
     OFFLINE_DIR="$FLUXENV_ROOT/offline_resources"
-    PROFILE_STEPS="preflight packages ssh hostname user sudo vpn shell_env vim finalize"
+    PROFILE_STEPS="preflight packages ssh hostname user sudo shell_env vim finalize"
 
     PROFILE_NAME="standard"
+    LAUNCH_MODE=""
+    INVOKING_USER=""
     CREATE_USER=1
     TARGET_USER=""
     TARGET_HOME=""
@@ -41,7 +43,7 @@ load_defaults() {
 
 load_profile() {
     local profile_name="$1"
-    local profile_path="$FLUXENV_ROOT/profiles/${profile_name}.env"
+    local profile_path="$FLUXENV_ROOT/config/profile-${profile_name}.env"
 
     [ -f "$profile_path" ] || die "Unknown profile: $profile_name"
 

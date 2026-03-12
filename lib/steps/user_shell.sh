@@ -219,7 +219,7 @@ step_user() {
     stage "用户配置"
 
     if [ "$CREATE_USER" -eq 0 ]; then
-        TARGET_USER="${TARGET_USER:-root}"
+        TARGET_USER="${TARGET_USER:-${INVOKING_USER:-root}}"
         TARGET_HOME="${TARGET_HOME:-$(get_user_home "$TARGET_USER")}"
         progress "当前 profile 使用现有用户: $TARGET_USER"
         return 0

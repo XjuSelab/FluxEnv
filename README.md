@@ -4,17 +4,14 @@ FluxEnv is a Bash-based environment bootstrap toolkit for Ubuntu/Debian hosts, A
 
 ## Entry Points
 
-- `bin/fluxenv`: unified orchestrator
+- `scripts/fluxenv`: unified orchestrator
 - `scripts/fetch_resources.sh`: unified offline resource fetch entry
 
 ## Repository Layout
 
 - `lib/`: shared runtime, config loader, and installation step modules
-- `profiles/`: built-in profile defaults
-- `configs/example.env`: override template for non-interactive runs
-- `resources/manifest.lock`: auditable external download manifest
+- `config/`: built-in profiles, example override config, and resource manifest
 - `offline_resources/`: cached third-party assets consumed at install time
-- `scripts/apps/`: standalone service and tool installers
 
 ## Typical Usage
 
@@ -27,13 +24,15 @@ Fetch offline resources on a connected machine:
 Run the standard host bootstrap interactively:
 
 ```bash
-sudo ./bin/fluxenv --profile standard
+sudo ./scripts/fluxenv --profile standard
 ```
+
+When `standard` is started through `sudo` by a normal user, FluxEnv reuses that current user and skips new-user creation. When it is started from a pure root session, it keeps the original create-a-new-user flow.
 
 Run a profile with explicit config:
 
 ```bash
-sudo ./bin/fluxenv --profile autodl-user --config ./configs/example.env --non-interactive
+sudo ./scripts/fluxenv --profile autodl-user --config ./config/example.env --non-interactive
 ```
 
 ## Notes
