@@ -21,6 +21,10 @@ load_defaults() {
     RESTART_SSH=1
     CHANGE_DEFAULT_SHELL=1
     FINAL_ACTION="su"
+    ENABLE_APT_MIRROR=1
+    APT_MIRROR_PRESET="tuna"
+    APT_UBUNTU_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/ubuntu"
+    APT_UBUNTU_PORTS_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports"
     APT_FIX_BROKEN=1
     APT_UPGRADE=1
     BASE_PACKAGES="wget curl unzip jq git zsh gcc g++ autojump ca-certificates sudo locales"
@@ -97,6 +101,12 @@ finalize_config() {
         ALLOW_ONLINE_FETCH=1
     else
         ALLOW_ONLINE_FETCH=0
+    fi
+
+    if is_true "${ENABLE_APT_MIRROR:-0}"; then
+        ENABLE_APT_MIRROR=1
+    else
+        ENABLE_APT_MIRROR=0
     fi
 
     if is_true "${APT_FIX_BROKEN:-0}"; then

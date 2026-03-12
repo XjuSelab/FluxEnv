@@ -28,9 +28,48 @@ update_hosts_file() {
     fi
 }
 
+apply_apt_mirror() {
+    local mirror_files=()
+    local file_path=""
+
+    if [ "$ENABLE_APT_MIRROR" -ne 1 ]; then
+        progress "跳过 apt 换源"
+        return 0
+    fi
+
+    if [ -f /etc/apt/sources.list ]; then
+        mirror_files+=("/etc/apt/sources.list")
+    fi
+
+    while IFS= read -r file_path; do
+        mirror_files+=("$file_path")
+    done < <(find /etc/apt/sources.list.d -maxdepth 1 \( -name '*.list' -o -name '*.sources' \) 2>/dev/null | sort)
+
+    if [ "${#mirror_files[@]}" -eq 0 ]; then
+        warn "未找到可修改的 apt 源文件，跳过换源"
+        return 0
+    fi
+
+    progress "应用 apt 镜像源: ${APT_MIRROR_PRESET} (${APT_UBUNTU_MIRROR})"
+    if [ "${DRY_RUN:-0}" -eq 1 ]; then
+        printf '    [dry-run] %s\n' "${mirror_files[@]}"
+        return 0
+    fi
+
+    for file_path in "${mirror_files[@]}"; do
+        backup_path "$file_path"
+        sed -i \
+            -e "s|https\?://archive\.ubuntu\.com/ubuntu|${APT_UBUNTU_MIRROR}|g" \
+            -e "s|https\?://security\.ubuntu\.com/ubuntu|${APT_UBUNTU_MIRROR}|g" \
+            -e "s|https\?://ports\.ubuntu\.com/ubuntu-ports|${APT_UBUNTU_PORTS_MIRROR}|g" \
+            "$file_path"
+    done
+}
+
 step_packages() {
     stage "系统更新和软件包安装"
 
+    apply_apt_mirror
     try_shell "清理 apt 列表缓存" "rm -rf /var/lib/apt/lists/*"
     try_cmd "更新软件源信息" apt update
 
