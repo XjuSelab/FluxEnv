@@ -95,7 +95,7 @@ disabled = false
 ignore_base = false
 style = "#78E08F bold"
 symbol = ""
-format = "[\\(\$symbol\$environment\\)](\$style) "
+format = '[\(\$symbol\$environment\)](\$style) '
 
 [custom.conda_filter]
 command = "if [ \"\$CONDA_DEFAULT_ENV\" = \".docker\" ]; then echo ''; else echo \"\$CONDA_DEFAULT_ENV\"; fi"
@@ -182,7 +182,7 @@ disabled = false
 ignore_base = false
 style = "#78E08F bold"
 symbol = ""
-format = "[\\(\$symbol\$environment\\)](\$style) "
+format = '[\(\$symbol\$environment\)](\$style) '
 
 # =======================
 # 5. 提示符 (灵动指针)
@@ -192,6 +192,25 @@ success_symbol = "[❯](white bold)"
 error_symbol = "[❯](red bold)"
 vimcmd_symbol = "[❮](green bold)"
 EOF
+    fi
+}
+
+validate_starship_config() {
+    local config_path="$TARGET_HOME/.config/starship.toml"
+
+    if [ ! -f "$config_path" ] || ! command_exists starship; then
+        return 0
+    fi
+
+    if [ "${DRY_RUN:-0}" -eq 1 ]; then
+        progress "校验 Starship 配置"
+        echo "    [dry-run] STARSHIP_CONFIG=$config_path starship module character"
+        return 0
+    fi
+
+    progress "校验 Starship 配置"
+    if ! env STARSHIP_CONFIG="$config_path" starship module character >/dev/null 2>&1; then
+        die "生成的 Starship 配置无效: $config_path"
     fi
 }
 
@@ -288,6 +307,7 @@ step_shell_env() {
 
     write_zshrc
     write_starship_config
+    validate_starship_config
 
     if [ "$TARGET_USER" != "root" ] && [ "${DRY_RUN:-0}" -eq 0 ]; then
         chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.zsh" "$TARGET_HOME/.config" "$TARGET_HOME/.zshrc" "$TARGET_HOME/bin"
