@@ -29,16 +29,51 @@ export LANG=en_US.UTF-8
 export FLUXENV_PROMPT_HOST="${HOST_NAME}"
 $(render_proxy_exports)
 
-alias ll='ls -lh --color=auto'
-alias grep='grep --color=auto'
-
+# ==============================================
+# 1. 初始化 Starship
+# ==============================================
 if command -v starship >/dev/null 2>&1; then
     eval "\$(starship init zsh)"
 fi
 
+# ==============================================
+# 2. 基础配置
+# ==============================================
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+alias ls='ls --color=auto'
+alias ll='ls -lh --color=auto'
+alias grep='grep --color=auto'
+zstyle ':completion:*' list-colors "\${(s.:.)LS_COLORS}"
+
+HISTFILE="\$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_SAVE_NO_DUPS
+setopt HIST_REDUCE_BLANKS
+
 autoload -Uz compinit
 compinit
 
+if [ -z "\$XDG_RUNTIME_DIR" ]; then
+    export XDG_RUNTIME_DIR=/run/user/\$(id -u)
+    if [ ! -d "\$XDG_RUNTIME_DIR" ]; then
+        sudo mkdir -p "\$XDG_RUNTIME_DIR"
+        sudo chown \$(whoami):\$(whoami) "\$XDG_RUNTIME_DIR"
+        sudo chmod 700 "\$XDG_RUNTIME_DIR"
+    fi
+fi
+
+# ==============================================
+# end. 加载插件 (必须放在文件最后)
+# ==============================================
 [ -f ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 EOF
