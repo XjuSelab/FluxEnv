@@ -48,6 +48,21 @@ step_preflight() {
         progress "standard profile 将复用当前 sudo 用户: $TARGET_USER"
     fi
 
+    if [ "$PROFILE_NAME" = "autodl" ]; then
+        CREATE_USER=0
+        ENABLE_TEMP_SUDO=0
+
+        if [ "$LAUNCH_MODE" = "sudo-user" ]; then
+            TARGET_USER="$INVOKING_USER"
+            TARGET_HOME="$(get_user_home "$TARGET_USER")"
+            progress "autodl profile 将复用当前 sudo 用户: $TARGET_USER"
+        else
+            TARGET_USER="root"
+            TARGET_HOME="/root"
+            progress "autodl profile 将继续配置 root 用户"
+        fi
+    fi
+
     if [ "$CREATE_USER" -eq 0 ]; then
         TARGET_USER="${TARGET_USER:-root}"
         TARGET_HOME="${TARGET_HOME:-$(get_user_home "$TARGET_USER")}"
