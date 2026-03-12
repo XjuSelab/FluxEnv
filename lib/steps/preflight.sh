@@ -12,12 +12,8 @@ step_preflight() {
         die "当前实现仅支持 apt 系发行版"
     fi
 
-    detect_arch
-    if [ -n "$XRAY_ARCHIVE" ]; then
-        progress "检测到架构: $ARCH"
-    else
-        warn "未识别的架构 $ARCH，将跳过 Xray 安装"
-    fi
+    ARCH="$(uname -m)"
+    progress "检测到架构: $ARCH"
 
     if has_systemd; then
         INIT_SYSTEM="systemd"

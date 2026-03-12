@@ -8,7 +8,6 @@ Current buckets:
 - `zsh-*`: pinned plugin commits mirrored into `offline_resources/`.
 - `vim-config` and `vundle`: currently tracked as upstream Git mirrors with `HEAD`; pin to a commit after the first reviewed fetch.
 - `docker-*`, `nodesource-*`, `pnpm-*`: legacy helper dependencies moved into the manifest so they are auditable even before those helper scripts are fully migrated.
-- `xray-*`: already vendored locally and checksummed; the manifest marks them as `manual` until their exact upstream release URLs are recorded.
 
 Recommended workflow:
 

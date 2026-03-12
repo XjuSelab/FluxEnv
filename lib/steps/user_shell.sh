@@ -11,8 +11,6 @@ export FLUXENV_PROMPT_HOST="${HOST_NAME}"
 
 alias ll='ls -lh --color=auto'
 alias grep='grep --color=auto'
-alias start-vpn='source ~/bin/start-vpn'
-alias stop-vpn='source ~/bin/stop-vpn'
 
 if command -v starship >/dev/null 2>&1; then
     eval "\$(starship init zsh)"
@@ -30,7 +28,7 @@ write_starship_config() {
     local docker_format='$hostname'
     local docker_hostname_block='[hostname]
 ssh_only = false
-format = "@[$hostname]($style) "
+format = "@[\$hostname](\$style) "
 trim_at = "."
 style = "cyan"'
 
@@ -124,7 +122,7 @@ show_always = true
 # 2. 配置主机名 (Hostname)
 [hostname]
 ssh_only = false
-format = "@[$hostname]($style) "
+format = "@[\$hostname](\$style) "
 trim_at = "."
 style = "cyan"
 

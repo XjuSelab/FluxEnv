@@ -16,11 +16,6 @@ step_finalize() {
     echo "  主机名: ${HOST_NAME}"
     echo "  Init: ${INIT_SYSTEM}"
     echo "  容器环境: ${CONTAINER_MODE}"
-    if [ "$VPN_INSTALLED" -eq 1 ]; then
-        echo "  VPN: 已安装"
-    else
-        echo "  VPN: 未安装"
-    fi
     if [ "$VIM_ENABLED" -eq 1 ]; then
         echo "  Vim: 已配置"
     else

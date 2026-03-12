@@ -268,16 +268,6 @@ is_container() {
     [ -f /run/.containerenv ]
 }
 
-detect_arch() {
-    ARCH="$(uname -m)"
-    case "$ARCH" in
-        x86_64) XRAY_ARCHIVE="Xray-linux-64.zip" ;;
-        aarch64|arm64) XRAY_ARCHIVE="Xray-linux-arm64-v8a.zip" ;;
-        *) XRAY_ARCHIVE="" ;;
-    esac
-    export ARCH XRAY_ARCHIVE
-}
-
 set_sshd_option() {
     local key="$1"
     local value="$2"

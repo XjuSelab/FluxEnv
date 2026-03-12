@@ -11,7 +11,6 @@ load_defaults() {
     TARGET_HOME=""
     FORCE_RECREATE_USER=0
     ENABLE_TEMP_SUDO=1
-    ENABLE_VPN="ask"
     ENABLE_VIM="ask"
     VIM_MODE="full"
     INSTALL_VIM_PLUGINS=1
@@ -32,16 +31,11 @@ load_defaults() {
     HOST_NAME=""
     USER_NAME=""
     USER_PASSWORD=""
-    VPN_DOMAIN=""
-    VPN_UUID=""
     XDG_TARGET_USER=""
 
-    XRAY_ARCHIVE=""
     INIT_SYSTEM="unknown"
     CONTAINER_MODE=0
-    VPN_ENABLED=0
     VIM_ENABLED=0
-    VPN_INSTALLED=0
     STARSHIP_INSTALLED=0
 }
 

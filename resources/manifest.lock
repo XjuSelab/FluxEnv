@@ -9,5 +9,3 @@ docker-install-script	http	-	https://get.docker.com	offline_resources/upstream/g
 nodesource-setup-20	http	-	https://deb.nodesource.com/setup_20.x	offline_resources/upstream/setup_20.x	-	Legacy Node helper upstream script
 pnpm-install-script	http	-	https://get.pnpm.io/install.sh	offline_resources/upstream/pnpm-install.sh	-	Legacy pnpm installer
 aliyun-docker-gpg	http	-	https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg	offline_resources/upstream/docker-aliyun.gpg	-	Docker CN helper key
-xray-linux-64	manual	-	UNRESOLVED	Xray-linux-64.zip	df22ad60c1251c9fb63d7f85b3677872edf61c6715eba64b06adbfec658f4938	Already vendored in repo; upstream release URL still needs explicit pin
-xray-linux-arm64	manual	-	UNRESOLVED	Xray-linux-arm64-v8a.zip	67ea391812f90fa17e29a60c8faa834bcf30ead0f84eb6b2bbd2d398d56b759e	Already vendored in repo; upstream release URL still needs explicit pin
