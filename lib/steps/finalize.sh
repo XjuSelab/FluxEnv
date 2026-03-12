@@ -1,5 +1,37 @@
 #!/bin/bash
 
+enter_final_zsh() {
+    local current_user=""
+    local zsh_path=""
+
+    if [ "${DRY_RUN:-0}" -eq 1 ]; then
+        progress "进入 zsh 登录 shell"
+        echo "    [dry-run] exec zsh -l"
+        return 0
+    fi
+
+    if ! command_exists zsh; then
+        progress "安装完成，请重新登录或手动切换 shell"
+        return 0
+    fi
+
+    if [ ! -t 0 ] || [ ! -t 1 ]; then
+        progress "检测到非交互终端，跳过自动进入 zsh"
+        return 0
+    fi
+
+    current_user="$(id -un)"
+    zsh_path="$(command -v zsh)"
+
+    if [ -n "${TARGET_USER:-}" ] && [ "$TARGET_USER" != "$current_user" ]; then
+        progress "切换到 $TARGET_USER 并进入 zsh 登录 shell"
+        exec su - "$TARGET_USER" -s "$zsh_path"
+    fi
+
+    progress "进入 zsh 登录 shell"
+    exec "$zsh_path" -l
+}
+
 step_finalize() {
     stage "清理和完成"
 
@@ -22,22 +54,5 @@ step_finalize() {
         echo "  Vim: 未配置"
     fi
     echo "================================================================"
-
-    case "$FINAL_ACTION" in
-        su)
-            if [ "${DRY_RUN:-0}" -eq 0 ] && [ "$TARGET_USER" != "root" ]; then
-                progress "切换到新用户 $TARGET_USER"
-                exec su - "$TARGET_USER"
-            fi
-            ;;
-        zsh)
-            if [ "${DRY_RUN:-0}" -eq 0 ] && command_exists zsh; then
-                progress "进入 zsh 登录 shell"
-                exec zsh -l
-            fi
-            ;;
-        *)
-            progress "安装完成，请重新登录或手动切换 shell"
-            ;;
-    esac
+    enter_final_zsh
 }
