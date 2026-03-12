@@ -1,0 +1,77 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+source "$ROOT_DIR/lib/core.sh"
+source "$ROOT_DIR/lib/config.sh"
+
+for module in "$ROOT_DIR"/lib/steps/*.sh; do
+    # shellcheck source=/dev/null
+    source "$module"
+done
+
+usage() {
+    cat <<'EOF'
+Usage: bin/fluxenv [options]
+
+Options:
+  --profile <name>       Built-in profile: standard, autodl-user, autodl-root
+  --config <path>        Optional .env config overrides
+  --non-interactive      Disable prompts; require config values up front
+  --dry-run              Print planned mutations without executing them
+  --help                 Show this help
+EOF
+}
+
+PROFILE="standard"
+CONFIG_FILE=""
+INTERACTIVE=1
+DRY_RUN=0
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --profile)
+            PROFILE="${2:-}"
+            shift 2
+            ;;
+        --config)
+            CONFIG_FILE="${2:-}"
+            shift 2
+            ;;
+        --non-interactive)
+            INTERACTIVE=0
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=1
+            INTERACTIVE=0
+            shift
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            die "Unknown argument: $1"
+            ;;
+    esac
+done
+
+load_defaults "$ROOT_DIR"
+load_profile "$PROFILE"
+
+if [ -n "$CONFIG_FILE" ]; then
+    load_env_file "$CONFIG_FILE"
+fi
+
+finalize_config
+init_colors
+
+TOTAL_STAGES="$(word_count "$PROFILE_STEPS")"
+CURRENT_STAGE=0
+
+for step_name in $PROFILE_STEPS; do
+    "step_${step_name}"
+done

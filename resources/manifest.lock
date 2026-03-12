@@ -1,0 +1,13 @@
+# name	type	ref	url	target	sha256	note
+starship-install	http	-	https://starship.rs/install.sh	offline_resources/starship_install.sh	-	Upstream install script retained for offline fallback
+starship-x86_64	http	-	https://github.com/starship/starship/releases/download/v1.24.1/starship-x86_64-unknown-linux-gnu.tar.gz	offline_resources/starship-x86_64-unknown-linux-gnu.tar.gz	afa28fc0b33cfcf6da95f0f2cf2ec47b5f7460d64cf3eff17e2c11c5dfffab43	Pinned starship binary
+zsh-autosuggestions	git	85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5	https://github.com/zsh-users/zsh-autosuggestions	offline_resources/zsh-autosuggestions	-	Pinned plugin checkout
+zsh-syntax-highlighting	git	5eb677bb0fa9a3e60f0eff031dc13926e093df92	https://github.com/zsh-users/zsh-syntax-highlighting	offline_resources/zsh-syntax-highlighting	-	Pinned plugin checkout
+vim-config	git	HEAD	https://gitee.com/hzx_3/vim.git	offline_resources/vim	-	Unpinned upstream vim config; lock after first verified fetch
+vundle	git	HEAD	https://gitee.com/hzx_3/vundle.git	offline_resources/vundle	-	Unpinned upstream vundle mirror; lock after first verified fetch
+docker-install-script	http	-	https://get.docker.com	offline_resources/upstream/get-docker.sh	-	Legacy Docker helper upstream script
+nodesource-setup-20	http	-	https://deb.nodesource.com/setup_20.x	offline_resources/upstream/setup_20.x	-	Legacy Node helper upstream script
+pnpm-install-script	http	-	https://get.pnpm.io/install.sh	offline_resources/upstream/pnpm-install.sh	-	Legacy pnpm installer
+aliyun-docker-gpg	http	-	https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg	offline_resources/upstream/docker-aliyun.gpg	-	Docker CN helper key
+xray-linux-64	manual	-	UNRESOLVED	Xray-linux-64.zip	df22ad60c1251c9fb63d7f85b3677872edf61c6715eba64b06adbfec658f4938	Already vendored in repo; upstream release URL still needs explicit pin
+xray-linux-arm64	manual	-	UNRESOLVED	Xray-linux-arm64-v8a.zip	67ea391812f90fa17e29a60c8faa834bcf30ead0f84eb6b2bbd2d398d56b759e	Already vendored in repo; upstream release URL still needs explicit pin
