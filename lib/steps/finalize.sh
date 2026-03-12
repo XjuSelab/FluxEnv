@@ -48,6 +48,14 @@ step_finalize() {
     echo "  主机名: ${HOST_NAME}"
     echo "  Init: ${INIT_SYSTEM}"
     echo "  容器环境: ${CONTAINER_MODE}"
+    if [ "${WSL_MODE:-0}" -eq 1 ] && [ "$PROFILE_NAME" = "standard" ] && [ -n "${WSL_DEFAULT_USER:-}" ]; then
+        if [ "${WSL_DEFAULT_USER_CHANGED:-0}" -eq 1 ]; then
+            echo "  WSL 默认用户: ${WSL_DEFAULT_USER} (已更新)"
+            echo "  提示: 请在 Windows 侧执行 wsl --shutdown 后重新进入发行版"
+        else
+            echo "  WSL 默认用户: ${WSL_DEFAULT_USER}"
+        fi
+    fi
     if [ "$VIM_ENABLED" -eq 1 ]; then
         echo "  Vim: 已配置"
     else

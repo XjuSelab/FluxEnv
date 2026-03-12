@@ -3,7 +3,7 @@
 load_defaults() {
     FLUXENV_ROOT="$1"
     OFFLINE_DIR="$FLUXENV_ROOT/offline_resources"
-    PROFILE_STEPS="preflight packages ssh hostname user sudo shell_env vim finalize"
+    PROFILE_STEPS="preflight packages ssh hostname user wsl_user sudo shell_env vim finalize"
 
     PROFILE_NAME="standard"
     LAUNCH_MODE=""
@@ -37,6 +37,9 @@ load_defaults() {
 
     INIT_SYSTEM="unknown"
     CONTAINER_MODE=0
+    WSL_MODE=0
+    WSL_DEFAULT_USER=""
+    WSL_DEFAULT_USER_CHANGED=0
     VIM_ENABLED=0
     STARSHIP_INSTALLED=0
 }

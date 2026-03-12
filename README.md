@@ -108,4 +108,5 @@ git config --global https.proxy ""
 - apt 源备份写入 `/var/backups/fluxenv/apt/`，不会污染 `sources.list.d`
 - 默认优先使用 `offline_resources/` 中的离线资源，除非显式开启在线抓取
 - `standard` 和 `autodl` 两种模式结束后都会自动进入 `zsh`
+- 在 WSL 的 `standard` 模式下，会自动检查并修正 `/etc/wsl.conf` 的默认登录用户；修改后需要在 Windows 侧执行 `wsl --shutdown`
 - 资源来源说明见 `docs/RESOURCE_SOURCES.md`

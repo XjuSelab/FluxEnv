@@ -288,6 +288,13 @@ is_container() {
     [ -f /run/.containerenv ]
 }
 
+is_wsl() {
+    [ -n "${WSL_INTEROP:-}" ] || \
+    [ -n "${WSL_DISTRO_NAME:-}" ] || \
+    grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null || \
+    uname -r 2>/dev/null | grep -qiE 'microsoft|wsl'
+}
+
 set_sshd_option() {
     local key="$1"
     local value="$2"

@@ -29,6 +29,13 @@ step_preflight() {
         progress "检测到宿主机环境"
     fi
 
+    if is_wsl; then
+        WSL_MODE=1
+        progress "检测到 WSL 环境"
+    else
+        WSL_MODE=0
+    fi
+
     if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER:-}" != "root" ]; then
         LAUNCH_MODE="sudo-user"
         INVOKING_USER="$SUDO_USER"
