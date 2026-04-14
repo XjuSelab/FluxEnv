@@ -1,0 +1,256 @@
+# ==============================================
+# [Section 1] 环境变量 & 核心设置
+# ==============================================
+# ------ 1.1 路径配置 (PATH) ------
+# Anaconda
+export PATH="/home/winbeau/anaconda3/bin:$PATH"
+# Created by `pipx`
+export PATH="$PATH:/home/winbeau/.local/bin"
+# User bin
+export PATH="$HOME/bin:$PATH"
+# Yarn & Node
+export PATH="$HOME/.yarn/bin:$PATH"
+export PATH="$HOME/.nvm/versions/node/v22.19.0/bin:$PATH"
+
+# ------ 1.2 开发环境设置 (SDKs/Libs) ------
+# NVM (Node Version Manager)
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
+
+# CUDA / WSL (重要)
+# export LD_LIBRARY_PATH=/usr/lib/wsl/lib:$LD_LIBRARY_PATH # WSL2 专用
+export CUDA_HOME=/usr/local/cuda-12.1
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+
+# Qt Framework
+export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox"
+export QT_QPA_PLATFORM=xcb
+export LIBGL_ALWAYS_SOFTWARE=1
+export PATH=$HOME/Qt/6.7.3/gcc_64/bin:$PATH
+export CMAKE_PREFIX_PATH=$HOME/Qt/6.7.3/gcc_64/lib/cmake
+export QT_PLUGIN_PATH=$HOME/Qt/6.7.3/gcc_64/plugins
+export QTWEBENGINEPROCESS_PATH=$HOME/Qt/6.7.3/gcc_64/libexec/QtWebEngineProcess
+export QTWEBENGINE_DICTIONARIES_PATH=$HOME/.local/share/qtwebengine_dictionaries
+export GTK_MODULES=appmenu-gtk-module
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export SDL_IM_MODULE=fcitx
+
+# ------ 1.3 Zsh 行为设置 ------
+# 禁用未追踪文件的脏状态检查 (提升 git 仓库中的 prompt 速度)
+DISABLE_UNTRACKED_FILES_DIRTY=true
+# 修复粘贴时的转义问题
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
+zstyle ':bracketed-paste-magic' command 'git clone' 'disable-highlighting'
+# 禁用 SSH 主机补全 (避免卡顿)
+zstyle ':completion:*:*:ssh:*' hosts off
+
+# ------ 1.4 API Keys (敏感信息) ------
+export GEMINI_API_KEY="AIzaSyC2JBo3cSG8vYznVlWEala_MZP8ddG6pU0"
+export ANTHROPIC_AUTH_TOKEN="sk-BjlmpLaHpxDaTgRkL88cngmDCdQS0DyzxEHgR2LGhicGUjpl"
+export ANTHROPIC_BASE_URL="https://anyrouter.top"
+# export MORPH_API_KEY="sk-IubCKmeMJnv7eSbf1DwacEPcA40Piq0HZ_h0X_WYrSJdPBcC"
+# export TWENTYFIRST_API_KEY="59d90a411938b3693e74218e5ffd2ab20a1c74c553577344fa9f297bc7f9e9a4"
+# export TAVILY_API_KEY=""
+
+export DASHSCOPE_API_KEY="sk-71bcde720fe44178ba377c1fe996366a"
+
+# ==============================================
+# [Section 2] 脚本函数 & 快捷命令
+# ==============================================
+
+# ------ 2.1 Jupyter / Conda / Python ------
+alias jn="unset no_proxy && export no_proxy='::1,127.0.0.1,localhost' && jupyter notebook --no-browser --ip='0.0.0.0' --port=8888"
+alias jl="unset no_proxy && export no_proxy='::1,127.0.0.1,localhost' && jupyter lab --no-browser --ip='0.0.0.0' --port=8888"
+alias fuck-pull="git fetch --all && git reset --hard origin/main && git clean -fd"
+# 进入你常用的 AdaHead 视频目录
+alias yazi-l40='yazi ~/target-server/workspace/AdaHead/videos'
+
+# 如果你想更彻底一点，先自动挂载再进入
+alias ya-ada='sshfs target-server:/home/intern/winbeau_zhao/ ~/target-server -o reconnect && yazi ~/target-server/workspace/AdaHead/videos'
+alias sudo="sudo -E "
+
+initconda() {
+    echo "Initializing conda environment..."
+    export CONDA_CHANGE_PS1=false
+    eval "$(/home/winbeau/anaconda3/bin/conda shell.zsh hook)"
+    echo "Conda environment activated"
+    echo "Current env: $(conda info --envs | grep '*' | awk '{print $1}')"
+}
+
+startd2l() {
+    initconda
+    conda activate d2l-zh
+    echo "Current env: $(conda info --envs | grep '*' | awk '{print $1}')"
+    case "$1" in
+        -n) echo "open Jupyter notebook..."; jupyter notebook --no-browser --port=8888 ;;
+        -l) echo "open Jupyter lab..."; jupyter lab --no-browser --port=8888 ;;
+        *)  echo "usage: startpyl -n (notebook) | -l (lab)" ;;
+    esac
+}
+
+startpyl() {
+    initconda
+    conda activate pyl
+    echo "Current env: $(conda info --envs | grep '*' | awk '{print $1}')"
+    case "$1" in
+        -n) echo "open Jupyter notebook..."; jupyter notebook --no-browser --port=8888 ;;
+        -l) echo "open Jupyter lab..."; jupyter lab --no-browser --port=8888 ;;
+        *)  echo "usage: startpyl -n (notebook) | -l (lab)" ;;
+    esac
+}
+
+initmamba() {
+    echo "🔹 Initializing Mamba environment..."
+    if ! command -v mamba >/dev/null 2>&1; then
+        echo "❌ mamba not found! Please install it first."
+        return 1
+    fi
+    eval "$(mamba shell hook --shell zsh)" && echo "✅ Mamba initialized."
+    mamba info --envs | grep '\*' | awk '{print "Current env: " $1}'
+}
+
+# ------ 2.2 C++ 编译助手 & 快捷键 ------
+# 找到最新修改的 cpp 文件
+last_cpp() { ls -t *.cpp 2>/dev/null | head -n 1; }
+
+# F10: 只编译
+c() {
+    local file=$(last_cpp)
+    [ -n "$file" ] && { echo "Compiling $file ..."; g++ "$file" -o a.out && echo "Done."; } || echo "No .cpp file found."
+}
+
+# Shift+F10: 编译并运行
+cr() {
+    local file=$(last_cpp)
+    [ -n "$file" ] && { echo "Compiling $file ..."; g++ "$file" -o a.out && { echo "Running ./a.out ..."; ./a.out; }; } || echo "No .cpp file found."
+}
+
+# F9: 查看代码
+cc() {
+    local file=$(last_cpp)
+    [ -n "$file" ] && { echo "===== $file ====="; cat "$file"; } || echo "No .cpp file found."
+}
+
+# 自动补全定义
+compdef -d c
+compdef -d cr
+compdef -d cc
+
+# 快捷键绑定
+bindkey -s '^[[21~' 'c\n'           # F10
+bindkey -s '^[[21;2~' 'cr\n'        # Shift+F10
+bindkey -s '^[[20~' 'cc\n'          # F9
+bindkey -s '^[[24~' 'build-compile\n' # F12
+
+# ------ 2.3 数据库 (PostgreSQL / Kingbase) ------
+initpsql() {
+    echo "Check PostgreSQL cluster status..."; pg_lsclusters
+    echo "Start PostgreSQL 14 main..."; sudo pg_ctlcluster 14 main start
+    echo "Welcome to PostgreSQL "; pg_lsclusters
+}
+
+enterpsql() {
+    echo "Connecting to PostgreSQL using pgcli..."
+    pgcli -h localhost -p 5433 -U postgres -d postgres
+}
+
+install_kingbase_types() {
+    echo "🚀 Installing kingbase_types.sql into all databases..."
+    for db in $(psql -h localhost -p 5433 -U postgres -t -c "SELECT datname FROM pg_database WHERE datistemplate = false;"); do
+        echo "👉 Installing into $db"
+        psql -h localhost -p 5433 -U postgres -d "$db" -f ~/kingbase_types.sql
+    done
+    echo "✅ Done."
+}
+
+# ------ 2.4 远程管理 & 文件传输 (SCP) ------
+alias scp-aliyun="scp -r ~/xju-oj/frontend/dist/ winbeau@47.95.11.166:/home/winbeau/"
+alias wget-dl-jupyter="wget https://github.com/winbeau/dl-jupyter/archive/refs/heads/main.zip -O dl-jupyter.zip"
+alias docker-presenton-google="docker start -ai presenton"
+
+scp-dl-jupyter() {
+    [ $# -ne 2 ] && { echo "Usage: scp-dl-jupyter <username> <public_ip>"; return 1; }
+    scp ~/scp-share/dl-jupyter.zip ${1}@${2}:/home/${1}/ && echo "Success." || echo "Error: Transfer failed."
+}
+
+scp-init-ubuntu() {
+    [ $# -ne 2 ] && { echo "Usage: scp-init-ubuntu <username> <public_ip>"; return 1; }
+    scp ~/scp-share/init-ubuntu.sh ${1}@${2}:/home/${1}/ && echo "Success." || echo "Error: Transfer failed."
+}
+
+# ------ 2.5 其他工具 (VPN / File View) ------
+alias start-vpn="source $HOME/bin/start-vpn"
+alias stop-vpn="source $HOME/bin/stop-vpn"
+alias ssh-jupyter-l40="ssh -L 8889:127.0.0.1:8889 target-server"
+alias ssh-jupyter-h200="ssh -L 9999:127.0.0.1:9999 H200-target-server"
+alias ssh-L40="ssh \
+  -L 8890:localhost:8890 \
+  -L 7860:localhost:7860 \
+  -L 8000:localhost:8000 \
+  -L 6006:localhost:6006 \
+  target-server
+"
+alias suv="source ./.venv/bin/activate"
+
+ohtml() {
+    [ -z "$1" ] && { echo "usage: ohtml <file path>"; return 1; }
+    wslview "$1"
+}
+
+# ==============================================
+# 1. 初始化 Starship
+# ==============================================
+eval "$(starship init zsh)"
+
+# ==============================================
+# 2. 基础配置
+# ==============================================
+# 开启颜色
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+alias ls='ls --color=auto'  # 让 ls 自动开启颜色
+alias ll='ls -lh --color=auto'
+alias grep='grep --color=auto'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# 历史记录配置 (按上下键查找历史)
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_SAVE_NO_DUPS
+setopt HIST_REDUCE_BLANKS
+
+# 补全系统初始
+autoload -Uz compinit
+compinit
+
+if [ -z "$XDG_RUNTIME_DIR" ]; then
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+        sudo mkdir -p $XDG_RUNTIME_DIR
+        sudo chown $(whoami):$(whoami) $XDG_RUNTIME_DIR
+        sudo chmod 700 $XDG_RUNTIME_DIR
+    fi
+fi
+
+# ==============================================
+# end. 加载插件 (必须放在文件最后)
+# ==============================================
+# 加载自动建议
+source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# 加载语法高亮 (这个必须是最后一行)
+source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+export PATH=$PATH:/snap/bin
