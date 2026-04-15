@@ -36,6 +36,10 @@ step_preflight() {
         WSL_MODE=0
     fi
 
+    if [ "$PROFILE_NAME" = "standard" ] && [ "${WSL_MODE:-0}" -ne 1 ]; then
+        die "standard profile 仅支持 WSL 环境；非 WSL 宿主机请使用 --profile normal"
+    fi
+
     if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER:-}" != "root" ]; then
         LAUNCH_MODE="sudo-user"
         INVOKING_USER="$SUDO_USER"
@@ -46,13 +50,13 @@ step_preflight() {
         progress "检测到 root 会话上下文"
     fi
 
-    if [ "$PROFILE_NAME" = "standard" ] && [ "$LAUNCH_MODE" = "sudo-user" ]; then
+    if { [ "$PROFILE_NAME" = "standard" ] || [ "$PROFILE_NAME" = "normal" ]; } && [ "$LAUNCH_MODE" = "sudo-user" ]; then
         CREATE_USER=0
         TARGET_USER="$INVOKING_USER"
         TARGET_HOME="$(get_user_home "$TARGET_USER")"
         ENABLE_TEMP_SUDO=0
         FINAL_ACTION="none"
-        progress "standard profile 将复用当前 sudo 用户: $TARGET_USER"
+        progress "${PROFILE_NAME} profile 将复用当前 sudo 用户: $TARGET_USER"
     fi
 
     if [ "$PROFILE_NAME" = "autodl" ]; then

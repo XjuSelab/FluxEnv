@@ -1,6 +1,6 @@
 # FluxEnv
 
-FluxEnv 是一个基于 Bash 的环境初始化工具，面向 Ubuntu / Debian 宿主机、AutoDL 容器用户环境，以及 root-only 容器环境。
+FluxEnv 是一个基于 Bash 的环境初始化工具，面向 WSL、Ubuntu / Debian 宿主机、AutoDL 容器用户环境，以及 root-only 容器环境。
 
 ## 入口脚本
 
@@ -28,7 +28,11 @@ cd /path/to/FluxEnv
 ./scripts/fetch_resources.sh
 ```
 
-### 1. `standard` 标准模式
+默认 profile 为 `normal`。如果不传 `--profile`，脚本会按非 WSL 宿主机模式执行。
+
+### 1. `standard` WSL 模式
+
+仅支持 WSL 环境；非 WSL 宿主机请使用 `normal`。
 
 普通用户通过 `sudo` 启动：
 
@@ -48,7 +52,30 @@ cd /path/to/FluxEnv
 
 这种方式会进入新建用户流程。
 
-### 2. `autodl` 模式
+### 2. `normal` 宿主机模式
+
+适用于非 WSL 的 Ubuntu / Debian 宿主机：
+
+```bash
+cd /path/to/FluxEnv
+sudo ./scripts/fluxenv --profile normal
+```
+
+普通用户通过 `sudo` 启动时，会复用当前 `sudo` 用户：
+
+```bash
+cd /path/to/FluxEnv
+sudo ./scripts/fluxenv --profile normal
+```
+
+纯 root 会话启动时，会进入新建用户流程：
+
+```bash
+cd /path/to/FluxEnv
+./scripts/fluxenv --profile normal
+```
+
+### 3. `autodl` 模式
 
 适用于 AutoDL 和容器环境，会根据启动上下文自动判定目标用户：
 
@@ -75,7 +102,7 @@ cd /path/to/FluxEnv
 
 ```bash
 cd /path/to/FluxEnv
-sudo ./scripts/fluxenv --profile standard --config ./config/example.env --non-interactive
+sudo ./scripts/fluxenv --profile normal --config ./config/example.env --non-interactive
 ```
 
 查看帮助：
@@ -127,6 +154,7 @@ git config --global https.proxy ""
 - 默认会在 `apt update` 前切换 Ubuntu 软件源到清华源；如需关闭，可设置 `ENABLE_APT_MIRROR=0`
 - apt 源备份写入 `/var/backups/fluxenv/apt/`，不会污染 `sources.list.d`
 - 默认优先使用 `offline_resources/` 中的离线资源，除非显式开启在线抓取
-- `standard` 和 `autodl` 两种模式结束后都会自动进入 `zsh`
+- `standard`、`normal` 和 `autodl` 三种模式结束后都会自动进入 `zsh`
 - 在 WSL 的 `standard` 模式下，会自动检查并修正 `/etc/wsl.conf` 的默认登录用户；修改后需要在 Windows 侧执行 `wsl --shutdown`
+- Starship 离线包目前仅内置 `x86_64` 版本；在树莓派等非 `x86_64` 设备上会自动跳过离线安装，不再中途中断
 - 资源来源说明见 `docs/RESOURCE_SOURCES.md`

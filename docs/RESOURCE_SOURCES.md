@@ -4,7 +4,7 @@ This repository now centralizes external downloads in [`config/resource-manifest
 
 Current buckets:
 
-- `starship-*`: prompt installer script and pinned `1.24.1` x86_64 binary.
+- `starship-*`: local copy of the upstream install script plus a pinned `1.24.1` x86_64 binary tarball.
 - `zsh-*`: pinned plugin commits mirrored into `offline_resources/`.
 - `vim-config` and `vundle`: currently tracked as upstream Git mirrors with `HEAD`; pin to a commit after the first reviewed fetch.
 - `docker-*`, `nodesource-*`, `pnpm-*`: legacy helper dependencies moved into the manifest so they are auditable even before those helper scripts are fully migrated.

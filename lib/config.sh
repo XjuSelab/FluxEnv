@@ -5,7 +5,7 @@ load_defaults() {
     OFFLINE_DIR="$FLUXENV_ROOT/offline_resources"
     PROFILE_STEPS="preflight packages ssh hostname user wsl_user sudo shell_env vim finalize"
 
-    PROFILE_NAME="standard"
+    PROFILE_NAME="normal"
     LAUNCH_MODE=""
     INVOKING_USER=""
     CREATE_USER=1

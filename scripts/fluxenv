@@ -17,7 +17,7 @@ usage() {
 Usage: scripts/fluxenv [options]
 
 Options:
-  --profile <name>       Built-in profile: standard, autodl
+  --profile <name>       Built-in profile: standard, normal, autodl
   --config <path>        Optional .env config overrides
   --non-interactive      Disable prompts; require config values up front
   --dry-run              Print planned mutations without executing them
@@ -25,7 +25,7 @@ Options:
 EOF
 }
 
-PROFILE="standard"
+PROFILE="normal"
 CONFIG_FILE=""
 INTERACTIVE=1
 DRY_RUN=0
