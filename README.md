@@ -84,6 +84,26 @@ sudo ./scripts/fluxenv --profile standard --config ./config/example.env --non-in
 ./scripts/fluxenv --help
 ```
 
+## 常用环境准备
+
+如需先安装 `uv`，可使用官方当前推荐的 Linux / macOS 一键安装命令：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+如需安装常用 `zsh` 插件：
+
+```bash
+mkdir -p ~/.zsh/plugins
+
+# 安装 zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-autosuggestions
+
+# 安装 zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting
+```
+
 ## 代理说明
 
 如果在 WSL 或切换用户后访问 GitHub 很慢，建议直接为目标用户设置 Git 全局代理：
