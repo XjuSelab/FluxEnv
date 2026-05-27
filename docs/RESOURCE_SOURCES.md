@@ -5,6 +5,7 @@ This repository now centralizes external downloads in [`config/resource-manifest
 Current buckets:
 
 - `starship-*`: local copy of the upstream install script plus a pinned `1.24.1` x86_64 binary tarball.
+- `uv-install`: local copy of Astral's installer, used to install `uv` system-wide into `/usr/local/bin`.
 - `zsh-*`: pinned plugin commits mirrored into `offline_resources/`.
 - `vim-config` and `vundle`: currently tracked as upstream Git mirrors with `HEAD`; pin to a commit after the first reviewed fetch.
 - `docker-*`, `nodesource-*`, `pnpm-*`: legacy helper dependencies moved into the manifest so they are auditable even before those helper scripts are fully migrated.

@@ -221,6 +221,7 @@ prompt_value() {
     local prompt_text="$2"
     local regex="${3:-.*}"
     local current_value="${!variable_name:-}"
+    local dry_run_value=""
     local input_value=""
 
     if [ -n "$current_value" ]; then
@@ -228,6 +229,24 @@ prompt_value() {
     fi
 
     if [ "${INTERACTIVE:-1}" -ne 1 ]; then
+        if [ "${DRY_RUN:-0}" -eq 1 ]; then
+            case "$variable_name" in
+                HOST_NAME)
+                    dry_run_value="fluxenv-dry-run"
+                    ;;
+                USER_NAME)
+                    dry_run_value="fluxenv"
+                    ;;
+            esac
+
+            if [ -n "$dry_run_value" ]; then
+                printf -v "$variable_name" "%s" "$dry_run_value"
+                export "$variable_name"
+                progress "dry-run 使用默认配置: $variable_name=$dry_run_value"
+                return 0
+            fi
+        fi
+
         die "缺少必需配置: $variable_name"
     fi
 
@@ -245,6 +264,7 @@ prompt_value() {
 prompt_password() {
     local variable_name="$1"
     local prompt_text="$2"
+    local dry_run_value=""
     local password_one=""
     local password_two=""
 
@@ -253,6 +273,14 @@ prompt_password() {
     fi
 
     if [ "${INTERACTIVE:-1}" -ne 1 ]; then
+        if [ "${DRY_RUN:-0}" -eq 1 ] && [ "$variable_name" = "USER_PASSWORD" ]; then
+            dry_run_value="fluxenv-dry-run-password"
+            printf -v "$variable_name" "%s" "$dry_run_value"
+            export "$variable_name"
+            progress "dry-run 使用默认配置: $variable_name=<hidden>"
+            return 0
+        fi
+
         die "缺少必需配置: $variable_name"
     fi
 

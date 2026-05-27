@@ -1,6 +1,7 @@
 # name	type	ref	url	target	sha256	note
 starship-install	http	-	https://starship.rs/install.sh	offline_resources/starship_install.sh	-	Upstream install script retained for offline fallback
 starship-x86_64	http	-	https://github.com/starship/starship/releases/download/v1.24.1/starship-x86_64-unknown-linux-gnu.tar.gz	offline_resources/starship-x86_64-unknown-linux-gnu.tar.gz	afa28fc0b33cfcf6da95f0f2cf2ec47b5f7460d64cf3eff17e2c11c5dfffab43	Pinned starship binary
+uv-install	http	-	https://astral.sh/uv/install.sh	offline_resources/uv-install.sh	-	Upstream uv installer for system-wide /usr/local/bin install
 zsh-autosuggestions	git	85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5	https://github.com/zsh-users/zsh-autosuggestions	offline_resources/zsh-autosuggestions	-	Pinned plugin checkout
 zsh-syntax-highlighting	git	5eb677bb0fa9a3e60f0eff031dc13926e093df92	https://github.com/zsh-users/zsh-syntax-highlighting	offline_resources/zsh-syntax-highlighting	-	Pinned plugin checkout
 vim-config	git	HEAD	https://gitee.com/hzx_3/vim.git	offline_resources/vim	-	Unpinned upstream vim config; lock after first verified fetch

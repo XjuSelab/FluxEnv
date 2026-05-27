@@ -111,12 +111,18 @@ sudo ./scripts/fluxenv --profile normal --config ./config/example.env --non-inte
 ./scripts/fluxenv --help
 ```
 
-## 常用环境准备
-
-如需先安装 `uv`，可使用官方当前推荐的 Linux / macOS 一键安装命令：
+跳过默认 apt 换源：
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+sudo ./scripts/fluxenv --profile normal --no-apt-mirror
+```
+
+## 常用环境准备
+
+初始化流程会尝试将 `uv` 安装到 `/usr/local/bin`，供 `root` 和普通用户共同使用。默认优先使用 `offline_resources/uv-install.sh`；如需在线回退，可在配置中设置 `ALLOW_ONLINE_FETCH=1`。
+
+```bash
+./scripts/fetch_resources.sh
 ```
 
 如需安装常用 `zsh` 插件：
@@ -151,7 +157,7 @@ git config --global https.proxy ""
 
 ## 说明
 
-- 默认会在 `apt update` 前切换 Ubuntu 软件源到清华源；如需关闭，可设置 `ENABLE_APT_MIRROR=0`
+- 默认会在 `apt update` 前切换 Ubuntu 软件源到清华源；如需关闭，可设置 `ENABLE_APT_MIRROR=0` 或传入 `--no-apt-mirror`
 - apt 源备份写入 `/var/backups/fluxenv/apt/`，不会污染 `sources.list.d`
 - 默认优先使用 `offline_resources/` 中的离线资源，除非显式开启在线抓取
 - `standard`、`normal` 和 `autodl` 三种模式结束后都会自动进入 `zsh`

@@ -21,6 +21,7 @@ Options:
   --config <path>        Optional .env config overrides
   --non-interactive      Disable prompts; require config values up front
   --dry-run              Print planned mutations without executing them
+  --no-apt-mirror        Do not replace apt sources with the configured mirror
   --help                 Show this help
 EOF
 }
@@ -29,6 +30,7 @@ PROFILE="normal"
 CONFIG_FILE=""
 INTERACTIVE=1
 DRY_RUN=0
+NO_APT_MIRROR=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -49,6 +51,10 @@ while [ $# -gt 0 ]; do
             INTERACTIVE=0
             shift
             ;;
+        --no-apt-mirror)
+            NO_APT_MIRROR=1
+            shift
+            ;;
         --help|-h)
             usage
             exit 0
@@ -64,6 +70,10 @@ load_profile "$PROFILE"
 
 if [ -n "$CONFIG_FILE" ]; then
     load_env_file "$CONFIG_FILE"
+fi
+
+if [ "$NO_APT_MIRROR" -eq 1 ]; then
+    ENABLE_APT_MIRROR=0
 fi
 
 finalize_config
