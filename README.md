@@ -65,6 +65,13 @@ cd /path/to/FluxEnv
 sudo ./scripts/fluxenv --profile normal
 ```
 
+如需保留当前 apt 源、不执行默认镜像切换：
+
+```bash
+cd /path/to/FluxEnv
+sudo ./scripts/fluxenv --profile normal --no-apt-mirror
+```
+
 普通用户通过 `sudo` 启动时，会复用当前 `sudo` 用户：
 
 ```bash
