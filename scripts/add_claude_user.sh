@@ -4,7 +4,7 @@
 #
 # 做法:目标用户敲 claude 时经 sudo 切到"登录持有者"(默认 winbeau)身份运行,
 #       但把环境变量对齐回目标用户,登录态经 ~/.claude 目录软链共享。
-# 新建用户会:设默认密码(123456,可覆盖)、加入 sudo 组、并复用 FluxEnv 的 zsh + starship(全线上,不用离线资源)。
+# 新建用户会:设默认密码(默认=用户名,CLAUDE_USER_PASSWORD 可覆盖)、加入 sudo 组、并复用 FluxEnv 的 zsh + starship(全线上)。
 # 详见 docs/CLAUDE_SHARED_LOGIN.md。
 #
 # 用法:
@@ -18,7 +18,6 @@ set -euo pipefail
 
 LOGIN_USER="${CLAUDE_LOGIN_USER:-winbeau}"
 SHARE_GROUP="${CLAUDE_SHARE_GROUP:-claudeshare}"
-USER_PASSWORD="${CLAUDE_USER_PASSWORD:-123456}"
 USER_SUDO="${CLAUDE_USER_SUDO:-1}"           # 新建用户是否加入 sudo 组(1=是)
 REAL_CLAUDE="/home/${LOGIN_USER}/.local/bin/claude"
 WRAPPER="/usr/local/bin/claude"
@@ -28,6 +27,7 @@ FLUXENV_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 NEW_USER="${1:-}"
 ACTION="${2:-install}"
+USER_PASSWORD="${CLAUDE_USER_PASSWORD:-$NEW_USER}"   # 默认密码=用户名(仅供本地 sudo/su;SSH 密码登录建议关闭)
 
 log()  { printf '  %s\n' "$*"; }
 stage() { printf '\n=== %s ===\n' "$*"; }
@@ -45,6 +45,7 @@ if [ "$ACTION" = "cleanup" ]; then
         log "删 .claude 软链"
     fi
     rm -f "/home/$NEW_USER/.claude.json"
+    rm -f "/etc/ssh/authorized_keys/$NEW_USER" && log "清 SSH 公钥 /etc/ssh/authorized_keys/$NEW_USER"
     if id "$NEW_USER" &>/dev/null; then
         userdel -r "$NEW_USER" 2>/dev/null && log "删用户 $NEW_USER(含家目录)"
     fi

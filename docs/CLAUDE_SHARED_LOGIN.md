@@ -36,12 +36,12 @@ sudo bash scripts/add_claude_user.sh dev3 cleanup
 |---|---|---|
 | `CLAUDE_LOGIN_USER` | `winbeau` | 登录持有者（凭证的真正主人） |
 | `CLAUDE_SHARE_GROUP` | `claudeshare` | 共享组名 |
-| `CLAUDE_USER_PASSWORD` | `123456` | 新建用户的初始密码（仅在**首次创建**时设置） |
+| `CLAUDE_USER_PASSWORD` | `<用户名>` | 新建用户的初始密码，默认=用户名（仅在**首次创建**时设置） |
 | `CLAUDE_USER_SUDO` | `1` | 新建用户是否加入 `sudo` 组（1=是） |
 
 ## 新建用户时的默认配置
 
-- **初始密码**：默认 `123456`（`CLAUDE_USER_PASSWORD` 可覆盖）。仅在用户**首次创建**时设置；对已存在用户重跑脚本不会改密码。
+- **初始密码**：默认**等于用户名**（`CLAUDE_USER_PASSWORD` 可覆盖）。仅在用户**首次创建**时设置；重跑不改密码。⚠️ 该密码很弱，仅供本地 `sudo`/`su -` 便利;**公网可达的机器务必用 `scripts/ssh_disable_password.sh` 关闭 SSH 密码登录**（见下）。
 - **sudo 组**：默认加入 `sudo` 组（`CLAUDE_USER_SUDO=0` 关闭）。
 - **shell**：复用 FluxEnv 的 `configure_shell_env_for_user`，配置 **zsh + starship**（`.zshrc`、`starship.toml`、zsh 插件），并 `chsh` 到 zsh。
   此步**强制全线上**（`OFFLINE_DIR` 指向空目录 + `ALLOW_ONLINE_FETCH=1`）：starship 走 `starship.rs`、插件走 `git clone`，不使用 `offline_resources/`。
@@ -120,6 +120,34 @@ dev3 输入 claude
 3. **额度共享**：所有人算持有者一个订阅，并发越多越快撞限流（这是配额，不是数据竞态）。
 4. **ACL 打穿隔离**：`/home/X` 对 `claudeshare` 开放 → 持有者能读写该用户整个家目录（`.ssh` 已排除保护）。
    一个人多账号无所谓；给别人则等于交出该家目录访问权。
+
+## SSH 公钥登录（add_ssh_key.sh）
+
+给 claude-share 用户加公钥登录有个坑:第 ⑥ 步用 ACL 把家目录开成**组可写**,而 sshd `StrictModes`(默认开)会因家目录组可写而**拒绝 `~/.ssh` 里的公钥**（`bad ownership or modes for directory /home/X`）。而家目录组可写是 claude 桥接必需的(要往里原子写 `.claude.json`),不能撤。
+
+`scripts/add_ssh_key.sh` 的办法:把公钥放到 **root 拥有的 `/etc/ssh/authorized_keys/<user>`**(StrictModes 对 root 路径通过),并给 sshd 追加一个 `AuthorizedKeysFile` 位置。**不动 `~/.ssh`、不影响其它用户、StrictModes 保持开启**。
+
+```bash
+sudo bash scripts/add_ssh_key.sh grapes "ssh-ed25519 AAAA... you@host"   # 公钥串
+sudo bash scripts/add_ssh_key.sh grapes ~/id_ed25519.pub                 # 公钥文件
+sudo bash scripts/add_ssh_key.sh grapes                                  # stdin 粘贴
+```
+
+它会:①写 `/etc/ssh/authorized_keys/<user>`(去重);②幂等写 sshd drop-in `AuthorizedKeysFile .ssh/authorized_keys /etc/ssh/authorized_keys/%u`;③`sshd -t` 校验后**热重载**(不断开现有连接);④打印客户端 `~/.ssh/config` 片段。
+
+- **为何不用 `Match ... StrictModes no`**:`StrictModes` 是全局指令,不能放进 `Match` 块(OpenSSH 9.x 实测)。
+- **为何不用 `Match Group claudeshare`**:登录持有者(winbeau)也在该组,会误伤其 `~/.ssh` 登录。追加式全局 `AuthorizedKeysFile` 对所有人只是多一个回退位置,谁都不破。
+
+### 公网加固:关闭密码登录（ssh_disable_password.sh）
+
+公网可达 + 弱密码（默认=用户名）= 迟早被爆破。**确认公钥能登之后**，用 `scripts/ssh_disable_password.sh` 只留公钥：
+
+```bash
+sudo bash scripts/ssh_disable_password.sh          # 带防锁死检查(确认执行者有 authorized_keys)
+sudo bash scripts/ssh_disable_password.sh undo     # 撤销,恢复密码登录
+```
+
+它写 `PasswordAuthentication no` / `KbdInteractiveAuthentication no`（drop-in），`sshd -t` 校验后热重载（不断现有连接），随时可撤。防锁死检查会拒绝在“执行者没有可用公钥”时关闭（`FORCE=1` 可越过）。
 
 ## 卸载
 
