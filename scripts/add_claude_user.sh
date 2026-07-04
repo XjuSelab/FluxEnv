@@ -4,21 +4,25 @@
 #
 # 做法:目标用户敲 claude 时经 sudo 切到"登录持有者"(默认 winbeau)身份运行,
 #       但把环境变量对齐回目标用户,登录态经 ~/.claude 目录软链共享。
+# 新建用户会:设默认密码(123456,可覆盖)、并复用 FluxEnv 的 zsh + starship 配置(全线上,不用离线资源)。
 # 详见 docs/CLAUDE_SHARED_LOGIN.md。
 #
 # 用法:
 #   sudo bash scripts/add_claude_user.sh dev3            # 新增/幂等接入 dev3
 #   sudo bash scripts/add_claude_user.sh dev3 cleanup    # 仅移除 dev3(公共基建保留)
 #   sudo CLAUDE_LOGIN_USER=alice bash scripts/add_claude_user.sh dev3   # 指定登录持有者
+#   sudo CLAUDE_USER_PASSWORD=xxx bash scripts/add_claude_user.sh dev3  # 指定初始密码
 
 set -euo pipefail
 
 LOGIN_USER="${CLAUDE_LOGIN_USER:-winbeau}"
 SHARE_GROUP="${CLAUDE_SHARE_GROUP:-claudeshare}"
+USER_PASSWORD="${CLAUDE_USER_PASSWORD:-123456}"
 REAL_CLAUDE="/home/${LOGIN_USER}/.local/bin/claude"
 WRAPPER="/usr/local/bin/claude"
 HELPER="/usr/local/bin/claude-bridge"
 SUDOERS="/etc/sudoers.d/claude-share"
+FLUXENV_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 NEW_USER="${1:-}"
 ACTION="${2:-install}"
@@ -60,6 +64,35 @@ install_sudoers() {
         rm -f "$tmp"
         die "sudoers 校验失败,未改动"
     fi
+}
+
+# 复用 FluxEnv 的 zsh + starship 配置,强制全线上(不碰 offline_resources/)。
+# 在子 shell 里加载 lib,避免其 stage/die 等同名函数污染本脚本。
+configure_zsh_starship() {
+    local user="$1"
+    local user_home="$2"
+    local lib="$FLUXENV_ROOT/lib/steps/user_shell.sh"
+
+    if [ ! -f "$lib" ]; then
+        log "未找到 FluxEnv lib($lib);跳过 zsh/starship(claude 桥接不受影响)"
+        return 0
+    fi
+    command -v zsh >/dev/null || { apt-get update -qq && apt-get install -y -qq zsh; }
+
+    (
+        source "$FLUXENV_ROOT/lib/core.sh"
+        source "$FLUXENV_ROOT/lib/config.sh"
+        source "$lib"
+        set +e                                   # 配置为尽力而为,单步失败不中断
+        init_colors
+        load_defaults "$FLUXENV_ROOT"
+        OFFLINE_DIR="$(mktemp -d)"               # 空目录 → 绕过所有离线资源
+        ALLOW_ONLINE_FETCH=1                     # 全线上:starship 走 starship.rs,插件走 git clone
+        HOST_NAME="$(hostname 2>/dev/null || echo host)"
+        command -v starship >/dev/null || install_starship
+        configure_shell_env_for_user "$user" "$user_home"
+        rmdir "$OFFLINE_DIR" 2>/dev/null || true
+    )
 }
 
 printf '########## 公共基建(幂等) ##########\n'
@@ -107,23 +140,38 @@ log "规则: $(cat "$SUDOERS")"
 
 printf '\n########## 用户 %s ##########\n' "$NEW_USER"
 
-stage "[6] 建用户 + 入组"
-id "$NEW_USER" &>/dev/null || useradd -m -s /bin/bash "$NEW_USER"
+stage "[6] 建用户 + 密码 + 入组"
+if id "$NEW_USER" &>/dev/null; then
+    user_created=0
+else
+    useradd -m -s /bin/bash "$NEW_USER"
+    user_created=1
+fi
 usermod -aG "$SHARE_GROUP" "$NEW_USER"
+if [ "$user_created" -eq 1 ]; then
+    printf '%s:%s\n' "$NEW_USER" "$USER_PASSWORD" | chpasswd
+    log "已设默认密码($USER_PASSWORD)"
+else
+    log "用户已存在,未改动密码"
+fi
 log "组: $(id -nG "$NEW_USER")"
 
-stage "[7] 开放 /home/$NEW_USER 给 $SHARE_GROUP(claude 任意目录可读写)"
+stage "[7] zsh + starship(复用 FluxEnv 配置,全线上)"
+configure_zsh_starship "$NEW_USER" "/home/$NEW_USER" \
+    || log "zsh/starship 配置有部分失败,已跳过(不影响 claude 桥接)"
+
+stage "[8] 开放 /home/$NEW_USER 给 $SHARE_GROUP(claude 任意目录可读写)"
 setfacl -R -m  "g:${SHARE_GROUP}:rwx" "/home/$NEW_USER"
 setfacl -R -dm "g:${SHARE_GROUP}:rwx" "/home/$NEW_USER"
 
-stage "[8] 保护 .ssh(避免组权限触发 ssh StrictModes 拒绝私钥)"
+stage "[9] 保护 .ssh(避免组权限触发 ssh StrictModes 拒绝私钥)"
 mkdir -p "/home/$NEW_USER/.ssh"
 setfacl -Rb "/home/$NEW_USER/.ssh"
 setfacl -db "/home/$NEW_USER/.ssh"
 chmod 700 "/home/$NEW_USER/.ssh"
 chown -R "$NEW_USER":"$NEW_USER" "/home/$NEW_USER/.ssh"
 
-stage "[9] .claude 目录软链 → $LOGIN_USER 的(共享登录;目录软链抗原子 rename)"
+stage "[10] .claude 目录软链 → $LOGIN_USER 的(共享登录;目录软链抗原子 rename)"
 dot_claude="/home/$NEW_USER/.claude"
 if [ -L "$dot_claude" ]; then
     ln -sfn "/home/$LOGIN_USER/.claude" "$dot_claude"
@@ -135,7 +183,7 @@ else
 fi
 chown -h "$NEW_USER":"$NEW_USER" "$dot_claude" 2>/dev/null || true
 
-stage "[10] .claude.json 拷贝(HOME 根文件,原子写不能软链;不含 token)"
+stage "[11] .claude.json 拷贝(HOME 根文件,原子写不能软链;不含 token)"
 dot_json="/home/$NEW_USER/.claude.json"
 if [ -e "$dot_json" ] && [ ! -L "$dot_json" ]; then
     log "已存在,保留 $NEW_USER 自己的"
@@ -149,7 +197,7 @@ else
     log "$LOGIN_USER 无 .claude.json,跳过(claude 首跑会自建)"
 fi
 
-stage "[11] 自测:环境对齐 + 真跑"
+stage "[12] 自测:环境对齐 + 真跑"
 # DISABLE_INSTALLATION_CHECKS 是有意注入的 claude 内部标志,比对时排除
 env_filter='^(SUDO_[A-Z]*|_|SHLVL|PWD|OLDPWD|BRIDGE_PATH|DISABLE_INSTALLATION_CHECKS)='
 native_env="$(mktemp)"; bridge_env="$(mktemp)"
@@ -169,5 +217,6 @@ sudo -u "$NEW_USER" -H bash -c "cd /home/$NEW_USER && timeout 90 claude -p 'repl
     || echo "(超时/需手动确认信任目录,不影响 env 结论)"
 
 stage "完成"
-log "$NEW_USER 登录后,任意目录敲 claude 即用 $LOGIN_USER 的登录;\$HOME/\$USER 等环境为原生 $NEW_USER"
+log "登录:su - $NEW_USER(或设了密码后直接登录,默认 $USER_PASSWORD),shell 为 zsh + starship"
+log "使用:任意目录敲 claude 即用 $LOGIN_USER 的登录;\$HOME/\$USER 等环境为原生 $NEW_USER"
 log "移除: sudo bash $0 $NEW_USER cleanup"

@@ -36,6 +36,14 @@ sudo bash scripts/add_claude_user.sh dev3 cleanup
 |---|---|---|
 | `CLAUDE_LOGIN_USER` | `winbeau` | 登录持有者（凭证的真正主人） |
 | `CLAUDE_SHARE_GROUP` | `claudeshare` | 共享组名 |
+| `CLAUDE_USER_PASSWORD` | `123456` | 新建用户的初始密码（仅在**首次创建**时设置） |
+
+## 新建用户时的默认配置
+
+- **初始密码**：默认 `123456`（`CLAUDE_USER_PASSWORD` 可覆盖）。仅在用户**首次创建**时设置；对已存在用户重跑脚本不会改密码。
+- **shell**：复用 FluxEnv 的 `configure_shell_env_for_user`，配置 **zsh + starship**（`.zshrc`、`starship.toml`、zsh 插件），并 `chsh` 到 zsh。
+  此步**强制全线上**（`OFFLINE_DIR` 指向空目录 + `ALLOW_ONLINE_FETCH=1`）：starship 走 `starship.rs`、插件走 `git clone`，不使用 `offline_resources/`。
+  starship 已系统级安装则跳过。若在非 FluxEnv 目录下运行（找不到 `lib/`），此步自动跳过，不影响 claude 桥接。
 
 ---
 
@@ -53,6 +61,7 @@ sudo bash scripts/add_claude_user.sh dev3 cleanup
  ⑥ /home/X 用 ACL 开放给组（claude 任意目录可读写）+ 保护 .ssh
  ⑦ /home/X/.claude      → 目录软链 → 登录持有者的        （共享登录，抗原子 rename）
  ⑧ /home/X/.claude.json → 拷贝一份                        （HOME 根文件原子写、不能软链；不含 token）
+ ⑨ 初始密码（默认 123456）+ zsh + starship               （复用 FluxEnv，全线上；见下）
 ```
 
 ### 一次调用的流程（以 dev3 为例）
