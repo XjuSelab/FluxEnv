@@ -11,6 +11,7 @@ FluxEnv 是一个基于 Bash 的环境初始化工具，面向 WSL、Ubuntu / De
 - `scripts/fluxenv`：统一初始化入口
 - `scripts/fetch_resources.sh`：离线资源抓取入口
 - `scripts/add_claude_user.sh`：让多个 Linux 用户共用同一个 Claude Code 登录（详见 `docs/CLAUDE_SHARED_LOGIN.md`）
+- `scripts/setup_reality.sh`：在 VPS 上一键部署 VLESS+Vision+REALITY 代理并产出 v2rayN 链接（详见 `docs/REALITY_PROXY.md`）
 
 ## 仓库结构
 
