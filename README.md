@@ -10,6 +10,7 @@ FluxEnv 是一个基于 Bash 的环境初始化工具，面向 WSL、Ubuntu / De
 
 - `scripts/fluxenv`：统一初始化入口
 - `scripts/fetch_resources.sh`：离线资源抓取入口
+- `scripts/add_claude_user.sh`：让多个 Linux 用户共用同一个 Claude Code 登录（详见 `docs/CLAUDE_SHARED_LOGIN.md`）
 
 ## 仓库结构
 
@@ -147,6 +148,23 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-au
 # 安装 zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting
 ```
+
+## Claude 多用户共享登录
+
+`scripts/add_claude_user.sh` 让机器上多个 Linux 用户**共用同一个 Claude Code 登录**（一份订阅/凭证），
+而每个用户敲 `claude` 时的环境仍像自己原生的（`HOME`/`USER`/`git`/`ssh` 都是自己的）。适合一个人用多个账号分隔工作。
+
+```bash
+# 新增/幂等接入一个用户（登录持有者默认 winbeau，可用 CLAUDE_LOGIN_USER 指定）
+sudo bash scripts/add_claude_user.sh dev3
+
+# 移除某用户（公共基建保留）
+sudo bash scripts/add_claude_user.sh dev3 cleanup
+```
+
+原理、实测依据与代价（进程 uid、历史共享、额度、git/ssh 身份等）见 `docs/CLAUDE_SHARED_LOGIN.md`。
+
+> ⚠️ 仅用于**同一个人**的多个账号复用一份订阅；给不同的人共享个人订阅违反 Anthropic 条款。
 
 ## 代理说明
 
