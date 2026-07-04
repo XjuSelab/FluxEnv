@@ -4,7 +4,7 @@
 #
 # 做法:目标用户敲 claude 时经 sudo 切到"登录持有者"(默认 winbeau)身份运行,
 #       但把环境变量对齐回目标用户,登录态经 ~/.claude 目录软链共享。
-# 新建用户会:设默认密码(123456,可覆盖)、并复用 FluxEnv 的 zsh + starship 配置(全线上,不用离线资源)。
+# 新建用户会:设默认密码(123456,可覆盖)、加入 sudo 组、并复用 FluxEnv 的 zsh + starship(全线上,不用离线资源)。
 # 详见 docs/CLAUDE_SHARED_LOGIN.md。
 #
 # 用法:
@@ -12,12 +12,14 @@
 #   sudo bash scripts/add_claude_user.sh dev3 cleanup    # 仅移除 dev3(公共基建保留)
 #   sudo CLAUDE_LOGIN_USER=alice bash scripts/add_claude_user.sh dev3   # 指定登录持有者
 #   sudo CLAUDE_USER_PASSWORD=xxx bash scripts/add_claude_user.sh dev3  # 指定初始密码
+#   sudo CLAUDE_USER_SUDO=0 bash scripts/add_claude_user.sh dev3        # 不加入 sudo 组
 
 set -euo pipefail
 
 LOGIN_USER="${CLAUDE_LOGIN_USER:-winbeau}"
 SHARE_GROUP="${CLAUDE_SHARE_GROUP:-claudeshare}"
 USER_PASSWORD="${CLAUDE_USER_PASSWORD:-123456}"
+USER_SUDO="${CLAUDE_USER_SUDO:-1}"           # 新建用户是否加入 sudo 组(1=是)
 REAL_CLAUDE="/home/${LOGIN_USER}/.local/bin/claude"
 WRAPPER="/usr/local/bin/claude"
 HELPER="/usr/local/bin/claude-bridge"
@@ -66,6 +68,31 @@ install_sudoers() {
     fi
 }
 
+# FluxEnv 的 .zshrc 用 sudo 建 XDG_RUNTIME_DIR,假设用户有 sudo 且处于 logind 会话;
+# 经 su/sudo su 进来的用户没有 logind 会话 → 那段会报错或每次开 shell 弹密码。
+# 这里把它替换成无特权回退(回退到 /tmp),避免打扰。缺 python3 则跳过(非致命)。
+patch_zshrc_xdg() {
+    local zshrc="$1"
+    [ -f "$zshrc" ] || return 0
+    command -v python3 >/dev/null || { log "无 python3,跳过 .zshrc XDG 段修补(非致命)"; return 0; }
+    python3 - "$zshrc" <<'PY'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+old = '''    if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+        sudo mkdir -p "$XDG_RUNTIME_DIR"
+        sudo chown $(whoami):$(whoami) "$XDG_RUNTIME_DIR"
+        sudo chmod 700 "$XDG_RUNTIME_DIR"
+    fi'''
+new = '''    if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+        export XDG_RUNTIME_DIR="${TMPDIR:-/tmp}/runtime-$(id -u)"
+        mkdir -m 700 -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
+    fi'''
+if old in s:
+    open(p, "w").write(s.replace(old, new))
+PY
+}
+
 # 复用 FluxEnv 的 zsh + starship 配置,强制全线上(不碰 offline_resources/)。
 # 在子 shell 里加载 lib,避免其 stage/die 等同名函数污染本脚本。
 configure_zsh_starship() {
@@ -93,6 +120,7 @@ configure_zsh_starship() {
         configure_shell_env_for_user "$user" "$user_home"
         rmdir "$OFFLINE_DIR" 2>/dev/null || true
     )
+    patch_zshrc_xdg "$user_home/.zshrc"
 }
 
 printf '########## 公共基建(幂等) ##########\n'
@@ -148,6 +176,9 @@ else
     user_created=1
 fi
 usermod -aG "$SHARE_GROUP" "$NEW_USER"
+if [ "$USER_SUDO" -eq 1 ]; then
+    usermod -aG sudo "$NEW_USER"
+fi
 if [ "$user_created" -eq 1 ]; then
     printf '%s:%s\n' "$NEW_USER" "$USER_PASSWORD" | chpasswd
     log "已设默认密码($USER_PASSWORD)"

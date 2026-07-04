@@ -37,13 +37,16 @@ sudo bash scripts/add_claude_user.sh dev3 cleanup
 | `CLAUDE_LOGIN_USER` | `winbeau` | 登录持有者（凭证的真正主人） |
 | `CLAUDE_SHARE_GROUP` | `claudeshare` | 共享组名 |
 | `CLAUDE_USER_PASSWORD` | `123456` | 新建用户的初始密码（仅在**首次创建**时设置） |
+| `CLAUDE_USER_SUDO` | `1` | 新建用户是否加入 `sudo` 组（1=是） |
 
 ## 新建用户时的默认配置
 
 - **初始密码**：默认 `123456`（`CLAUDE_USER_PASSWORD` 可覆盖）。仅在用户**首次创建**时设置；对已存在用户重跑脚本不会改密码。
+- **sudo 组**：默认加入 `sudo` 组（`CLAUDE_USER_SUDO=0` 关闭）。
 - **shell**：复用 FluxEnv 的 `configure_shell_env_for_user`，配置 **zsh + starship**（`.zshrc`、`starship.toml`、zsh 插件），并 `chsh` 到 zsh。
   此步**强制全线上**（`OFFLINE_DIR` 指向空目录 + `ALLOW_ONLINE_FETCH=1`）：starship 走 `starship.rs`、插件走 `git clone`，不使用 `offline_resources/`。
   starship 已系统级安装则跳过。若在非 FluxEnv 目录下运行（找不到 `lib/`），此步自动跳过，不影响 claude 桥接。
+- **.zshrc XDG 修补**：FluxEnv 生成的 `.zshrc` 用 `sudo` 建 `XDG_RUNTIME_DIR`（假设用户有 sudo 且处于 logind 会话）。经 `su`/`sudo su` 进来的用户没有 logind 会话，那段会报错或每次开 shell 弹密码。脚本会把它替换成无特权回退（回退到 `${TMPDIR:-/tmp}/runtime-<uid>`）。
 
 ---
 
