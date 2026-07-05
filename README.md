@@ -165,6 +165,20 @@ sudo bash scripts/add_claude_user.sh dev3
 sudo bash scripts/add_claude_user.sh dev3 cleanup
 ```
 
+**给用户加 SSH 公钥登录**（`add_ssh_key.sh`；因家目录被 ACL 开成组可写，公钥放 root 拥有的 `/etc/ssh/authorized_keys/<user>` 以绕开 sshd StrictModes）：
+
+```bash
+# 加公钥 + 打印客户端 ssh config + 默认关闭密码登录（CLAUDE_SSH_HOSTNAME 指定 config 里的 HostName）
+sudo CLAUDE_SSH_HOSTNAME=<服务器IP或域名> bash scripts/add_ssh_key.sh dev3 "ssh-ed25519 AAAA... you@host"
+
+# 只加公钥、不关密码登录
+sudo KEEP_PASSWORD=1 bash scripts/add_ssh_key.sh dev3 "ssh-ed25519 AAAA..."
+
+# 单独关闭 / 恢复 SSH 密码登录（带防锁死检查）
+sudo bash scripts/ssh_disable_password.sh
+sudo bash scripts/ssh_disable_password.sh undo
+```
+
 原理、实测依据与代价（进程 uid、历史共享、额度、git/ssh 身份等）见 `docs/CLAUDE_SHARED_LOGIN.md`。
 
 > ⚠️ 仅用于**同一个人**的多个账号复用一份订阅；给不同的人共享个人订阅违反 Anthropic 条款。
