@@ -169,7 +169,8 @@ sudo bash scripts/add_claude_user.sh dev3 cleanup
 
 ```bash
 # 加公钥 + 打印客户端 ssh config + 默认关闭密码登录（CLAUDE_SSH_HOSTNAME 指定 config 里的 HostName）
-sudo CLAUDE_SSH_HOSTNAME=<服务器IP或域名> bash scripts/add_ssh_key.sh dev3 "ssh-ed25519 AAAA... you@host"
+export CLAUDE_SSH_HOSTNAME=<服务器IP或域名>
+sudo -E bash scripts/add_ssh_key.sh dev3 "ssh-ed25519 AAAA... you@host"
 
 # 只加公钥、不关密码登录
 sudo KEEP_PASSWORD=1 bash scripts/add_ssh_key.sh dev3 "ssh-ed25519 AAAA..."
